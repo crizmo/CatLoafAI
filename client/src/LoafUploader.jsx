@@ -63,11 +63,24 @@ function LoafUploader() {
   };
 
   const fetchUploadedImages = async () => {
-    const response = await fetch("http://localhost:5000/uploads");
-    const data = await response.json();
-
-    setLoafImages(data.filter(img => img.includes("/dataset/loaf/")));
+    try {
+      const response = await fetch("http://localhost:5000/uploads");
+      const data = await response.json();
+  
+      if (!data || typeof data !== "object") {
+        throw new Error("Invalid response format");
+      }
+  
+      // Convert object values to a flat array of image URLs
+      const imageArray = Object.values(data).flat();
+  
+      setLoafImages(imageArray);
+    } catch (error) {
+      console.error("Failed to fetch uploaded images:", error);
+      setLoafImages([]); // Ensure it doesn't break if the fetch fails
+    }
   };
+  
 
   const filterImages = (images, filter) => {
     if (filter === "All Ratings") return images;

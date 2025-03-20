@@ -59,7 +59,8 @@ app.get("/uploads", (req, res) => {
                 .map(file => `http://localhost:5000/dataset/loaf/${dir}/${file}`);
         }
 
-        res.json(loafImages);
+        res.json(Object.values(loafImages).flat()); // Convert to array
+
     } catch (err) {
         console.error("❌ Failed to fetch uploads:", err);
         res.status(500).json({ error: "Failed to fetch images." });

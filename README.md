@@ -1,6 +1,6 @@
 # 🐱 Cat Loaf Rater
 
-### **A web app to rate and classify cat loaves using machine learning.**
+### Cat Loaf Rater is a machine learning-powered web application to train and rate cat loaves. Users can upload, paste, or fetch cat images, classify their loafness, and view detailed explanations with bounding boxes.
 
 ---
 

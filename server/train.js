@@ -5,27 +5,30 @@ const path = require("path");
 const IMG_SIZE = 128;
 
 async function loadDataset() {
-    const categories = ["loaf", "not_loaf"];
     let images = [];
     let labels = [];
 
     console.log("🔄 Loading dataset...");
 
-    for (let i = 0; i < categories.length; i++) {
-        const categoryPath = `dataset/${categories[i]}`;
-        if (!fs.existsSync(categoryPath)) {
-            console.log(`⚠️ Warning: No images found in ${categoryPath}`);
-            continue;
-        }
+    const loafBasePath = path.join("dataset", "loaf");
+    if (!fs.existsSync(loafBasePath)) {
+        console.error("❌ ERROR: No 'loaf' directory found in dataset!");
+        return { xs: null, ys: null };
+    }
 
-        const files = fs.readdirSync(categoryPath);
-        if (files.length === 0) {
-            console.log(`⚠️ Warning: No images found in ${categoryPath}`);
-            continue;
-        }
+    // Read all rating folders (6, 8, 9, 10, etc.)
+    const loafRatings = fs.readdirSync(loafBasePath).filter(dir => 
+        fs.statSync(path.join(loafBasePath, dir)).isDirectory()
+    );
+
+    for (const rating of loafRatings) {
+        const ratingPath = path.join(loafBasePath, rating);
+        const files = fs.readdirSync(ratingPath);
+
+        if (files.length === 0) continue; // Skip empty folders
 
         for (let file of files) {
-            const buffer = fs.readFileSync(path.join(categoryPath, file));
+            const buffer = fs.readFileSync(path.join(ratingPath, file));
             const tensor = tf.node.decodeImage(buffer)
                 .resizeNearestNeighbor([IMG_SIZE, IMG_SIZE])
                 .toFloat()
@@ -33,25 +36,28 @@ async function loadDataset() {
                 .expandDims();
 
             images.push(tensor);
-            labels.push(i);
+            labels.push(parseInt(rating) / 10); // Normalize rating (1-10) to 0.1-1
         }
     }
 
     if (images.length === 0) {
-        console.error("❌ ERROR: No images loaded! Make sure dataset folders contain images.");
-        process.exit(1);
+        console.error("❌ ERROR: No images found in dataset!");
+        return { xs: null, ys: null };
     }
 
     console.log(`✅ Loaded ${images.length} images successfully.`);
     return {
         xs: tf.concat(images),
-        ys: tf.oneHot(tf.tensor1d(labels, "int32"), 2)
+        ys: tf.tensor1d(labels, "float32").expandDims(1)
     };
 }
 
 async function trainModel() {
-    console.log("🚀 Starting model training...");
     const { xs, ys } = await loadDataset();
+    if (!xs || !ys) {
+        console.error("❌ ERROR: Dataset is empty. Training aborted.");
+        return;
+    }
 
     const model = tf.sequential();
     model.add(tf.layers.conv2d({ inputShape: [128, 128, 3], filters: 32, kernelSize: 3, activation: "relu" }));
@@ -60,16 +66,19 @@ async function trainModel() {
     model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }));
     model.add(tf.layers.flatten());
     model.add(tf.layers.dense({ units: 128, activation: "relu" }));
-    model.add(tf.layers.dense({ units: 2, activation: "softmax" }));
+    model.add(tf.layers.dense({ units: 1 })); // Output single loaf score
 
-    model.compile({ optimizer: "adam", loss: "categoricalCrossentropy", metrics: ["accuracy"] });
+    model.compile({ optimizer: "adam", loss: "meanSquaredError", metrics: ["mae"] });
 
     console.log("🧠 Training the model...");
+
     await model.fit(xs, ys, {
         epochs: 10,
         batchSize: 16,
         callbacks: {
-            onEpochEnd: (epoch, logs) => console.log(`📊 Epoch ${epoch + 1}: loss = ${logs.loss}, accuracy = ${logs.acc}`)
+            onEpochEnd: (epoch, logs) => {
+                console.log(`📊 Epoch ${epoch + 1}: Loss = ${logs.loss.toFixed(4)}, MAE = ${logs.mae.toFixed(4)}`);
+            }
         }
     });
 
@@ -78,7 +87,8 @@ async function trainModel() {
     console.log("✅ Model training complete!");
 }
 
-trainModel().catch(error => {
-    console.error("❌ ERROR: Training failed!", error);
-    process.exit(1);
-});
+// trainModel().catch(error => {
+//     console.error("❌ ERROR: Training failed!", error);
+// });
+
+module.exports = { trainModel };

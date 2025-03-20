@@ -6,7 +6,7 @@ function App() {
   return (
     <Router>
       <div style={{ textAlign: "center", padding: "20px" }}>
-        <h1>🐱 Cat Loaf Rater</h1>
+        <h1>🐱 CatLoafAI</h1>
         <nav>
           <Link to="/upload" style={{ margin: "10px" }}>Upload Loaf</Link>
           <Link to="/classify" style={{ margin: "10px" }}>Classify Loaf</Link>

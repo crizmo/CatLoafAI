@@ -1,11 +1,11 @@
-# 🐱 Cat Loaf Rater
+# 🐱 CatLoafAI
 
-### Cat Loaf Rater is a machine learning-powered web application to train and rate cat loaves. Users can upload, paste, or fetch cat images, classify their loafness, and view detailed explanations with bounding boxes.
+### CatLoafAI is a machine learning-powered web application to train and rate cat loaves. Users can upload, paste, or fetch cat images, classify their loafness, and view detailed explanations with bounding boxes.
 
 ---
 
 ## 📌 **Project Overview**
-The **Cat Loaf Rater** is a (Express, React, Node.js) + TensorFlow.js web app where users can **upload or paste** images of their cats, and the system will **analyze and rate the loafness** using a trained deep learning model.
+The **CatLoafAI** is a (Express, React, Node.js) + TensorFlow.js web app where users can **upload or paste** images of their cats, and the system will **analyze and rate the loafness** using a trained deep learning model.
 
 ---
 

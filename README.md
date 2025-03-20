@@ -25,7 +25,7 @@ The **Cat Loaf Rater** is a (Express, React, Node.js) + TensorFlow.js web app wh
 ### **1️⃣ Clone the Repository**  
 ```sh
 git clone https://github.com/crizmo/CatLoaf
-cd cat-loaf-rater
+cd catloaf
 ```
 
 ### **2️⃣ Install Dependencies**  

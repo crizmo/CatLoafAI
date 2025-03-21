@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
 import * as tf from "@tensorflow/tfjs";
+import {
+  Box,
+  Button,
+  Typography,
+  TextField,
+  Card,
+  CardMedia,
+  CircularProgress,
+} from "@mui/material";
 
 function LoafClassifier() {
   const [image, setImage] = useState(null);
@@ -8,9 +17,9 @@ function LoafClassifier() {
   const [markedImage, setMarkedImage] = useState(null);
   const [error, setError] = useState(null);
   const [fetchedImage, setFetchedImage] = useState(null);
-  const [explanation, setExplanation] = useState(null); // Store explanation text
+  const [explanation, setExplanation] = useState(null);
 
-  const CATAAS_API_URL = "https://cataas.com/cat"; // Fetch random cat images
+  const CATAAS_API_URL = "https://cataas.com/cat";
 
   useEffect(() => {
     async function loadModel() {
@@ -33,8 +42,8 @@ function LoafClassifier() {
     try {
       const response = await fetch(CATAAS_API_URL);
       const blob = await response.blob();
-      setFetchedImage(URL.createObjectURL(blob)); // Show preview
-      setImage(URL.createObjectURL(blob)); // Set for classification
+      setFetchedImage(URL.createObjectURL(blob));
+      setImage(URL.createObjectURL(blob));
     } catch (error) {
       console.error("Error fetching image:", error);
       alert("Failed to fetch image. Please try again.");
@@ -63,35 +72,26 @@ function LoafClassifier() {
       const loafScore = Math.round(score[0] * 10);
       setResult(`Loaf Score: ${loafScore}/10`);
       console.log("🍞 Loaf Score:", loafScore);
-      // Send the image to the server for explanation & bounding box points
+
       const formData = new FormData();
-      formData.append("image", await fetch(image).then(res => res.blob()));
+      formData.append("image", await fetch(image).then((res) => res.blob()));
 
       const response = await fetch("http://localhost:5000/analyze", {
         method: "POST",
-        body: formData
+        body: formData,
       });
 
       const data = await response.json();
-      
+
       if (loafScore < 4) setExplanation("Not a loaf: legs visible, bad shape.");
       else if (loafScore < 7) setExplanation("Partial loaf: tail visible | minor issues.");
       else if (loafScore < 9) setExplanation("Good loaf, but slight misalignment.");
       else setExplanation("Perfect loaf!");
 
-      // Draw bounding boxes based on key points
-      // ctx.strokeStyle = "red";
-      // ctx.lineWidth = 2;
-      // for (const box of data.bounding_boxes) {
-      //   console.log("📦 Drawing box:", box);
-      //   ctx.strokeRect(box.x, box.y, box.width, box.height);
-      // }
-
       setMarkedImage(canvas.toDataURL());
     };
   };
 
-  // Handle Ctrl+V Paste Image
   const handlePaste = (event) => {
     const items = (event.clipboardData || event.originalEvent.clipboardData).items;
     for (let item of items) {
@@ -100,7 +100,7 @@ function LoafClassifier() {
         if (file) {
           const reader = new FileReader();
           reader.onload = (e) => {
-            setImage(e.target.result); // Show pasted image immediately
+            setImage(e.target.result);
           };
           reader.readAsDataURL(file);
           alert("📋 Image pasted!");
@@ -115,27 +115,89 @@ function LoafClassifier() {
   }, []);
 
   return (
-    <div>
-      <h2>Classify Loaf</h2>
-      {error && <h3 style={{ color: "red" }}>{error}</h3>}
-      <input type="file" onChange={(e) => setImage(URL.createObjectURL(e.target.files[0]))} />
-      <button onClick={classifyImage} disabled={!model}>Classify</button>
-      <p>📋 Paste an image using Ctrl+V</p>
-
-      <h3>Fetch Random Cat Image</h3>
-      <button onClick={fetchRandomImage}>Fetch Image</button>
-
-      {fetchedImage && (
-        <div>
-          <button onClick={classifyImage}>Classify Fetched Cat</button>
-        </div>
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Classify Loaf
+      </Typography>
+      {error && (
+        <Typography variant="h6" color="error" gutterBottom>
+          {error}
+        </Typography>
       )}
-
-      {image && <img src={image} alt="Pasted/Uploaded Loaf" style={{ maxWidth: "300px", marginTop: "10px", borderRadius: "8px" }} />}
-      {result && <h3>{result}</h3>}
-      {markedImage && <img src={markedImage} alt="Analyzed Loaf" />}
-      {explanation && <p>{explanation}</p>}
-    </div>
+      <Box mb={2}>
+        <Button variant="contained" component="label">
+          Upload Image
+          <input
+            type="file"
+            hidden
+            onChange={(e) => setImage(URL.createObjectURL(e.target.files[0]))}
+          />
+        </Button>
+      </Box>
+      <Box mb={2}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={classifyImage}
+          disabled={!model}
+        >
+          Classify
+        </Button>
+        <Typography variant="body2" mt={1}>
+          📋 Paste an image using Ctrl+V
+        </Typography>
+      </Box>
+      <Box mb={2}>
+        <Typography variant="h5" gutterBottom>
+          Fetch Random Cat Image
+        </Typography>
+        <Button variant="contained" color="secondary" onClick={fetchRandomImage}>
+          Fetch Image
+        </Button>
+      </Box>
+      {fetchedImage && (
+        <Box mt={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={classifyImage}
+            disabled={!model}
+          >
+            Classify Fetched Cat
+          </Button>
+        </Box>
+      )}
+      {image && (
+        <Card sx={{ mt: 2, maxWidth: 300 }}>
+          <CardMedia
+            component="img"
+            image={image}
+            alt="Uploaded Loaf"
+            sx={{ borderRadius: 2 }}
+          />
+        </Card>
+      )}
+      {result && (
+        <Typography variant="h6" color="primary" mt={2}>
+          {result}
+        </Typography>
+      )}
+      {markedImage && (
+        <Card sx={{ mt: 2, maxWidth: 300 }}>
+          <CardMedia
+            component="img"
+            image={markedImage}
+            alt="Analyzed Loaf"
+            sx={{ borderRadius: 2 }}
+          />
+        </Card>
+      )}
+      {explanation && (
+        <Typography variant="body1" mt={2}>
+          {explanation}
+        </Typography>
+      )}
+    </Box>
   );
 }
 
